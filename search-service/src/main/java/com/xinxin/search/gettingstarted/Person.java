@@ -1,6 +1,5 @@
 package com.xinxin.search.gettingstarted;
 
-import javafx.scene.NodeBuilder;
 import lombok.Builder;
 import lombok.Data;
 import lombok.experimental.Tolerate;
