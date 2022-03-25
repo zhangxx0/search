@@ -108,6 +108,13 @@
             <version>1.14.3</version>
         </dependency>
 
+        <!--Rhino is an implementation of JavaScript in Java.-->
+        <dependency>
+            <groupId>org.mozilla</groupId>
+            <artifactId>rhino</artifactId>
+            <version>1.7.13</version>
+        </dependency>
+
     </dependencies>
 
 </project>

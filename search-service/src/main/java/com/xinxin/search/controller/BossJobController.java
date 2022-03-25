@@ -14,6 +14,10 @@ public class BossJobController {
     @Autowired
     BossJobService bossJobService;
 
+    /**
+     * http://localhost:9091/job/initdb
+     * @return
+     */
     @GetMapping("/initdb")
     public String initdb() {
         return bossJobService.initdb();

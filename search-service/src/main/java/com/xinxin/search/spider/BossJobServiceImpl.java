@@ -35,7 +35,7 @@ public class BossJobServiceImpl implements BossJobService {
     BossJobIndexRepository bossJobIndexRepository;
 
     // 获取页数
-    static final Integer MAX = 9;
+    static final Integer MAX = 1;
     // TODO 目前只能爬取前4页，后面的提示请稍后~~
     // 请求cookie
 //    static final String cookie = "lastCity=101120200; wd_guid=a9fc39d3-5b7d-45b8-a63c-18197d7c78c8; historyState=state; _bl_uid=y4kqhz64xearedq5X7gm16O11531; __zp_seo_uuid__=529541bf-aa65-439d-a4ef-cfc0c162a818; __g=-; Hm_lvt_194df3105ad7148dcf2b98a91b5e727a=1645512577,1645581492,1647823716; __l=r=https%3A%2F%2Fwww.baidu.com%2Flink%3Furl%3D2lXYzOjEWhL4w6R5ch9IdACx0iM9cRMy5svXDNNQzZXcDENIINUdfQWBuwYvbjNd%26wd%3D%26eqid%3Dc40fd42600566711000000026237cb59&l=%2Fwww.zhipin.com%2Fc101120200-p100101%2F%3Fka%3Dsearch_100101&s=3&g=&friend_source=0&s=3&friend_source=0; acw_tc=0a099d9a16480477812986406e019ac374c8e2129365537e59fdad48573bb7; Hm_lpvt_194df3105ad7148dcf2b98a91b5e727a=1648047788; __c=1645512576; __a=32118873.1645512576..1645512576.71.1.71.71; __zp_stoken__=c818dKQgpTFI7DVJtfApFaiN%2FQSMLe0Qwdw5pXGM3ZHsjDykgXVd3fWUDBmoIMGAhT11NOhxOLyV6e34NcWZuEGscfhx9TSsUd2YkQlQfJmxsOhJENj8ORXEQYBlnTANxDWR%2FThxEUEctOg0%3D";
@@ -82,9 +82,10 @@ public class BossJobServiceImpl implements BossJobService {
 
         Map<String, String> map = new HashMap<>();
         String html = response.body().string();
-        // log.info(html);
+         log.info(html);
         Document document = Jsoup.parse(html);
 
+        // 本地存储文件
 //        File input = new File("E:\\Code\\LearnCode\\search\\search-service\\src\\main\\resources\\html\\333.html");
 //        Document document = Jsoup.parse(input, "UTF-8", "http://example.com/");
 
@@ -205,10 +206,10 @@ public class BossJobServiceImpl implements BossJobService {
     public String initdb() {
         String result = "成功";
         try {
-            // TODO 构建多页面循环，可设置爬取页面数目
+            // 构建多页面循环，可设置爬取页面数目
             for (int i = 1; i <= MAX; i++) {
                 /**
-                 * TODO 构造页面的URL
+                 * 构造页面的URL
                  * 其中cookie可能是临时的，随时可能失效
                  */
                 String url = String.format("https://www.zhipin.com/c101120200-p100101/?page=%d&ka=page-%d", i, i);
