@@ -11,3 +11,6 @@ spring:
         server-addr: localhost:8848
   profiles:
     active: dev
+logging:
+  level:
+    org.springframework.data.elasticsearch.core: debug

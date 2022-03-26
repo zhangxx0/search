@@ -1,6 +1,13 @@
 package com.xinxin.search.spider;
 
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch.core.search.Hit;
+import co.elastic.clients.json.jackson.JacksonJsonpMapper;
+import co.elastic.clients.transport.ElasticsearchTransport;
+import co.elastic.clients.transport.rest_client.RestClientTransport;
+import com.google.common.collect.Lists;
 import com.xinxin.search.dataobject.BossJob;
+import com.xinxin.search.dto.BossJobSearchDto;
 import com.xinxin.search.esindex.BossJobIndex;
 import com.xinxin.search.repository.BossJobIndexRepository;
 import com.xinxin.search.repository.BossJobRepository;
@@ -8,6 +15,17 @@ import lombok.extern.slf4j.Slf4j;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.client.RequestOptions;
+import org.elasticsearch.client.RestClient;
+import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.common.unit.Fuzziness;
+import org.elasticsearch.index.query.*;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.sort.FieldSortBuilder;
+import org.elasticsearch.search.sort.ScoreSortBuilder;
+import org.elasticsearch.search.sort.SortOrder;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Attributes;
 import org.jsoup.nodes.Document;
@@ -15,6 +33,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
@@ -28,11 +47,23 @@ import java.util.*;
 @Service
 public class BossJobServiceImpl implements BossJobService {
 
+    /**
+     * 索引名称
+     */
+    static final String BOSS_JOB_INDEX = "boss_job_index";
+
     @Autowired
     BossJobRepository bossJobRepository;
 
     @Autowired
     BossJobIndexRepository bossJobIndexRepository;
+
+    @Qualifier("elasticsearchClient")
+    @Autowired
+    RestHighLevelClient restHighLevelClient;
+
+    @Autowired
+    RestClient restClient;
 
     // 获取页数
     static final Integer MAX = 1;
@@ -82,7 +113,7 @@ public class BossJobServiceImpl implements BossJobService {
 
         Map<String, String> map = new HashMap<>();
         String html = response.body().string();
-         log.info(html);
+        log.info(html);
         Document document = Jsoup.parse(html);
 
         // 本地存储文件
@@ -194,7 +225,7 @@ public class BossJobServiceImpl implements BossJobService {
     public static void main(String[] args) {
 //        try {
         // TODO 构建多页面循环，可设置爬取页面数目
-        System.out.println(url.substring(url.indexOf("com")+3));
+        System.out.println(url.substring(url.indexOf("com") + 3));
 
 //        } catch (IOException e) {
 //            e.printStackTrace();
@@ -254,5 +285,121 @@ public class BossJobServiceImpl implements BossJobService {
             return e.getMessage();
         }
 
+    }
+
+    /**
+     * 职位搜索
+     *
+     * @param bossJobSearchDto
+     * @return
+     */
+    @Override
+    public List<BossJobIndex> searchJobWithRestClient(BossJobSearchDto bossJobSearchDto) throws IOException {
+        List<BossJobIndex> jobList = Lists.newArrayList();
+
+        SearchRequest searchRequest = new SearchRequest(BOSS_JOB_INDEX);
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+
+        // and or 整合查询条件
+        BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
+
+        // 全量 QueryBuilders.matchAllQuery()
+        // 单字段模糊 两种创建方式
+        MatchQueryBuilder matchQueryBuilder = new MatchQueryBuilder("name", bossJobSearchDto.getKeyword());
+        MatchQueryBuilder nameMatchQB = QueryBuilders.matchQuery("name", bossJobSearchDto.getKeyword())
+                .fuzziness(Fuzziness.AUTO);
+
+        // 多字段模糊查询
+        MultiMatchQueryBuilder multiMatchQueryBuilder = QueryBuilders
+                .multiMatchQuery(bossJobSearchDto.getKeyword(), "name", "companyName");
+
+        // 精确查询
+        TermQueryBuilder financeTermQB = QueryBuilders
+                .termQuery("finance.keyword", bossJobSearchDto.getFinance());
+
+        boolQueryBuilder.must(multiMatchQueryBuilder)
+                .must(financeTermQB);
+
+        searchSourceBuilder.query(boolQueryBuilder);
+//        searchSourceBuilder.trackTotalHits(true);
+        searchSourceBuilder.from(0);
+        searchSourceBuilder.size(5);
+
+        // 排序
+        searchSourceBuilder.sort(new ScoreSortBuilder().order(SortOrder.DESC));
+        searchSourceBuilder.sort(new FieldSortBuilder("id").order(SortOrder.DESC));
+
+        searchRequest.source(searchSourceBuilder);
+
+        log.info("+++++++++++++++++++++++++++++");
+        log.info(searchSourceBuilder.toString());
+        log.info("+++++++++++++++++++++++++++++");
+
+        SearchResponse searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+        log.info(String.valueOf(searchResponse.getHits().getTotalHits().value));
+        searchResponse.getHits().forEach(res -> {
+//            log.info(res.toString());
+        });
+
+        log.info("client:" + restHighLevelClient);
+//        restHighLevelClient
+        return jobList;
+    }
+
+    /**
+     * Elasticsearch Java API Client的基本使用方法参见：
+     * https://blog.csdn.net/anjiongyi/article/details/123391835
+     *
+     * @param bossJobSearchDto
+     * @return
+     * @throws IOException
+     */
+    @Override
+    public List<BossJobIndex> searchJobWithESJavaAPIClient(BossJobSearchDto bossJobSearchDto) throws IOException {
+        List<BossJobIndex> jobList = Lists.newArrayList();
+
+
+        // Create the transport with a Jackson mapper
+        ElasticsearchTransport transport = new RestClientTransport(
+                restClient, new JacksonJsonpMapper());
+
+        // And create the API client
+        ElasticsearchClient client = new ElasticsearchClient(transport);
+
+        co.elastic.clients.elasticsearch.core.SearchResponse<BossJobIndex> search = client.search(s -> s
+                        .index(BOSS_JOB_INDEX)
+                        .query(q -> q
+                                .bool(b -> b
+                                        .must(must -> must
+                                                .multiMatch(m -> m
+                                                        .fields("name", "companyName")
+                                                        .query(bossJobSearchDto.getKeyword())
+                                                )
+
+                                        )
+                                        .must(must -> must
+                                                .term(t -> t
+                                                        .field("finance.keyword")
+                                                        .value(v -> v.stringValue(bossJobSearchDto.getFinance()))
+                                                )
+                                        )
+
+                                )
+                        ),
+                BossJobIndex.class);
+
+        /**
+         * com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException: Unrecognized field "_class" (class com.xinxin.search.esindex.BossJobIndex), not marked as ignorable (20 known properties: "remark", "updateId", "education", "salary", "name", "welfare", "area", "recruiterPosition", "companyType", "tags", "finance", "id", "agelimit", "companySize", "companyName", "recruiter", "createId", "companyLogo", "createDate", "updateDate"])
+         * 在index document上添加：
+         * @JsonIgnoreProperties(ignoreUnknown = true)
+         */
+
+        log.info(String.valueOf(search.hits().total().value()));
+        log.info(String.valueOf(search.hits().hits().size()));
+        for (Hit<BossJobIndex> hit : search.hits().hits()) {
+            log.info(String.valueOf(hit.source()));
+        }
+
+        return jobList;
     }
 }

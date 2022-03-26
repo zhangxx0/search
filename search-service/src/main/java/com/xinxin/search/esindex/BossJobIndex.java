@@ -1,5 +1,6 @@
 package com.xinxin.search.esindex;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.Document;
@@ -10,6 +11,7 @@ import java.util.Date;
 
 @Data
 @Document(indexName = "boss_job_index")
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class BossJobIndex {
     @Id
     private Long id;
@@ -35,4 +37,30 @@ public class BossJobIndex {
     private Date createDate;
     private Integer updateId;
     private Date updateDate;
+
+    @Override
+    public String toString() {
+        return "BossJobIndex++{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", area='" + area + '\'' +
+                ", salary='" + salary + '\'' +
+                ", agelimit='" + agelimit + '\'' +
+                ", education='" + education + '\'' +
+                ", recruiter='" + recruiter + '\'' +
+                ", recruiterPosition='" + recruiterPosition + '\'' +
+                ", companyName='" + companyName + '\'' +
+                ", companyType='" + companyType + '\'' +
+                ", companyLogo='" + companyLogo + '\'' +
+                ", finance='" + finance + '\'' +
+                ", companySize='" + companySize + '\'' +
+                ", tags='" + tags + '\'' +
+                ", welfare='" + welfare + '\'' +
+                ", remark='" + remark + '\'' +
+                ", createId=" + createId +
+                ", createDate=" + createDate +
+                ", updateId=" + updateId +
+                ", updateDate=" + updateDate +
+                '}';
+    }
 }

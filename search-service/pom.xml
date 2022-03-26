@@ -115,6 +115,23 @@
             <version>1.7.13</version>
         </dependency>
 
+        <dependency>
+            <groupId>co.elastic.clients</groupId>
+            <artifactId>elasticsearch-java</artifactId>
+            <version>7.17.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.12.3</version>
+        </dependency>
+        <!--jakarta/json/JsonException-->
+        <!--https://stackoverflow.com/questions/68040881/jaxb-moxy-unmarshalling-json-runs-into-error-exception-in-thread-main-java-lan-->
+        <dependency>
+            <groupId>org.glassfish</groupId>
+            <artifactId>jakarta.json</artifactId>
+            <version>2.0.1</version>
+        </dependency>
     </dependencies>
 
 </project>
