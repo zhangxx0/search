@@ -1,5 +1,6 @@
 package com.xinxin.search.spider;
 
+import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -16,6 +17,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -96,11 +98,17 @@ public class ZhuangbiService {
     }
 
     public static void main(String[] args) {
-        try {
+        List<String> list = Lists.newArrayList("无边落木萧萧下","不尽长江滚滚来","万里悲秋常作客","百年多病独登台");
+        String result = list.stream()
+                .map(word->word+"\n")
+                .reduce((a,b)->a+""+b)
+                .get();
+        System.out.println(result);
+        /*try {
             work();
         } catch (IOException e) {
             e.printStackTrace();
-        }
+        }*/
     }
 
 }

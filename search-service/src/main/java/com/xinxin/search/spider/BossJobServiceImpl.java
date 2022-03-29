@@ -366,27 +366,35 @@ public class BossJobServiceImpl implements BossJobService {
         // And create the API client
         ElasticsearchClient client = new ElasticsearchClient(transport);
 
-        co.elastic.clients.elasticsearch.core.SearchResponse<BossJobIndex> search = client.search(s -> s
-                        .index(BOSS_JOB_INDEX)
-                        .query(q -> q
-                                .bool(b -> b
-                                        .must(must -> must
-                                                .multiMatch(m -> m
-                                                        .fields("name", "companyName")
-                                                        .query(bossJobSearchDto.getKeyword())
+        co.elastic.clients.elasticsearch.core.SearchResponse<BossJobIndex> search = client
+                .search(s -> s
+                                .index(BOSS_JOB_INDEX)
+                                .query(q -> q
+                                        .bool(b -> b
+                                                .must(must -> must
+                                                        .multiMatch(m -> m
+                                                                .fields("name", "companyName")
+                                                                .query(bossJobSearchDto.getKeyword())
+                                                        )
+
+                                                )
+                                                .must(must -> must
+                                                        .term(t -> t
+                                                                .field("finance.keyword")
+                                                                .value(v -> v.stringValue(bossJobSearchDto.getFinance()))
+                                                        )
                                                 )
 
                                         )
-                                        .must(must -> must
-                                                .term(t -> t
-                                                        .field("finance.keyword")
-                                                        .value(v -> v.stringValue(bossJobSearchDto.getFinance()))
-                                                )
-                                        )
+                                ),
+                        BossJobIndex.class);
 
-                                )
-                        ),
-                BossJobIndex.class);
+        /**
+         * TODO 尝试打印DSL：下面这样的该怎么打印呢？？？
+         * .query方法的定义：
+         * SearchRequest.Builder query(Function<co.elastic.clients.elasticsearch._types.query_dsl.Query.Builder, ObjectBuilder<Query>> fn)
+         */
+        log.info(client.toString());
 
         /**
          * com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException: Unrecognized field "_class" (class com.xinxin.search.esindex.BossJobIndex), not marked as ignorable (20 known properties: "remark", "updateId", "education", "salary", "name", "welfare", "area", "recruiterPosition", "companyType", "tags", "finance", "id", "agelimit", "companySize", "companyName", "recruiter", "createId", "companyLogo", "createDate", "updateDate"])

@@ -26,8 +26,8 @@ class BossJobServiceImplTest {
         bossJobSearchDto.setFinance("已上市");
         List<BossJobIndex> list = null;
         try {
-            list = bossJobService.searchJobWithRestClient(bossJobSearchDto);
-//            list = bossJobService.searchJobWithESJavaAPIClient(bossJobSearchDto);
+//            list = bossJobService.searchJobWithRestClient(bossJobSearchDto);
+            list = bossJobService.searchJobWithESJavaAPIClient(bossJobSearchDto);
         } catch (IOException e) {
             e.printStackTrace();
         }
